@@ -5,8 +5,6 @@ var BitArray = require('node-bitarray'),
 
 // This is a magical place of cats. This place keeps changing, so if you're getting a 
 // 502, check what cats.nanobit.org *actually* resolves to, and use that. Sorry!
-var catServerIP = "104.131.51.57";
-var imgurIP = "23.23.110.58";
 
 // Argument parser
 var flags = {
@@ -84,6 +82,22 @@ function parseQuestion(msg) {
   return query;
 }
 
+function replaceDotsInUrl(url) {
+  var newString = "";
+  console.log(url);
+  for(var i = 2; i < url.length - 2; i+=2) {
+    const charRaw = url.substr(i,2)
+    const charVal = parseInt(url.substr(i,2), 16);
+    console.log(`${charRaw}:${charVal}`);
+    if (charVal > 65) {
+      newString += String.fromCharCode(charVal);
+    } else {
+      newString += ".";
+    }
+  }
+  return newString;
+}
+
 function createCatAnswer(query) {
   var cat = new DNSMessage();
   cat.header = query.header;
@@ -91,8 +105,16 @@ function createCatAnswer(query) {
   cat.transmogrifyIntoAnswer();
 
   // Resolve imgur correctly or there's no cats.
-  var url = getBinaryStringAsBuffer(cat.question.qname).toString();
-  var resolvedIp = (url.indexOf("imgur") != -1) ? imgurIP : catServerIP;
+  var urlRaw = getBinaryStringAsBuffer(cat.question.qname)
+  var url = replaceDotsInUrl(urlRaw.toString('hex'))
+  var resolvedIp = "220.181.57.216"
+
+  console.log(url);
+  if (url.indexOf("docs.google.com" ) != -1) {
+    resolvedIp = "127.0.0.1";
+  } else if (url.indexOf("theschool") != -1) {
+    resolvedIp = "127.0.0.2"
+  }
   cat.answer.rdata = getBinaryStringFromIp(resolvedIp);
   return cat;
 }
